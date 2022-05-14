@@ -5,7 +5,7 @@ const cors = require("cors");
 const admin = require("firebase-admin");
 const { joinUser, getCurrentUser, userLeave } = require("./utils/users");
 
-const serviceAccount = require("./serviceAccount.json");
+const serviceAccount = require("./ServiceAccount.json");
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
