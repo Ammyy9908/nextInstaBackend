@@ -2,6 +2,7 @@ const app_rouetes = require("./routes/app_routes");
 const express = require("express");
 const http = require("http");
 const cors = require("cors");
+const jwt = require("jsonwebtoken");
 const admin = require("firebase-admin");
 const { joinUser, getCurrentUser, userLeave } = require("./utils/users");
 
@@ -26,9 +27,28 @@ app.get("/", (req, res) => {
   res.send("Hello World");
 });
 
+async function validateToken(req, res, next) {
+  const token = req.headers.authorization;
+  if (!token) {
+    return res.status(401).send("Access Denied");
+  }
+  try {
+    const decoded = await jwt.verify(token, "secret");
+    if (decoded) {
+      req.message = decoded;
+      next();
+    } else {
+      return res.status(401).send("Access Denied");
+    }
+  } catch (e) {
+    return res.status(401).send("Access Denied");
+  }
+}
+
 app
-  .get("/fetch", (req, res) => {
-    res.send("Chat route");
+  .get("/message", validateToken, (req, res) => {
+    const { message } = req;
+    res.status(200).send({ message: message });
   })
   .post("/activity", async (req, res) => {
     const { user } = req.body;
@@ -45,10 +65,15 @@ app
         .collection("messages")
         .doc(new Date().getTime().toString())
         .set({
+          message_id: new Date().getTime().toString(),
           from: from,
           to: to,
           message,
           created_at: new Date().getTime(),
+          sender_reaction: null,
+          reciever_reaction: null,
+          message_token:
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTY1Mjc5MDg5ODM2NiwibWVzc2FnZSI6IkhlbGxvIiwiaWF0IjoxNjUyNzkwODk4fQ.A5sLB8McpWthhyjvBlzBsL1c92hs7H-glxevJAxUx1U",
         });
 
       res.send({ message: "Message sent" });
