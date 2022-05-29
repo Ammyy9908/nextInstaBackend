@@ -60,21 +60,19 @@ app
   .post("/message/:from/:to", async (req, res) => {
     const { from, to } = req.params;
     const { message } = req.body;
+    const token = await jwt.sign({ message: message.content }, "NEXT_SECRET");
+
     try {
-      const sented = await db
-        .collection("messages")
-        .doc(new Date().getTime().toString())
-        .set({
-          message_id: new Date().getTime().toString(),
-          from: from,
-          to: to,
-          message,
-          created_at: new Date().getTime(),
-          sender_reaction: null,
-          reciever_reaction: null,
-          message_token:
-            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTY1Mjc5MDg5ODM2NiwibWVzc2FnZSI6IkhlbGxvIiwiaWF0IjoxNjUyNzkwODk4fQ.A5sLB8McpWthhyjvBlzBsL1c92hs7H-glxevJAxUx1U",
-        });
+      await db.collection("messages").doc(new Date().getTime().toString()).set({
+        message_id: new Date().getTime().toString(),
+        from: from,
+        to: to,
+        message,
+        created_at: new Date().getTime(),
+        sender_reaction: null,
+        reciever_reaction: null,
+        message_token: token,
+      });
 
       res.send({ message: "Message sent" });
     } catch (e) {
